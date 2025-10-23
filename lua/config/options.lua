@@ -1,6 +1,3 @@
--- ~/.config/nvim/lua/config/options.lua
-
--- Configurações básicas
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.splitbelow = true
@@ -18,13 +15,11 @@ vim.o.autochdir = true
 vim.opt.updatetime = 300
 vim.opt.laststatus = 3
 
--- Configurações de Code Folding
 vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevelstart = 99
 vim.opt.foldenable = true
 
--- Configurações de Diagnósticos (LSP)
 vim.diagnostic.config({
 	virtual_text = { prefix = "●", spacing = 4 },
 	signs = {

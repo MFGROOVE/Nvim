@@ -1,4 +1,3 @@
-
 return {
   "mfussenegger/nvim-jdtls",
   ft = "java",
@@ -38,12 +37,29 @@ return {
       cmd = { jdtls_bin, '-data', workspace_dir },
       root_dir = require('jdtls.setup').find_root({'.git', 'mvnw', 'gradlew'}),
       on_attach = on_attach,
-      
       init_options = {
         bundles = bundles
+      },
+
+      settings = {
+        java = {
+          configuration = {
+            runtimes = {
+              {
+                name = "JavaSE-17",
+                path = "/usr/lib/jvm/java-17-openjdk/",
+              },
+            }
+          }
+        }
       }
     }
 
     require('jdtls').start_or_attach(config)
+
+    local opts = { noremap = true, silent = true }
+    vim.keymap.set("n", "<leader>dn", function() require('jdtls').test_nearest_method() end, { desc = "JDTLS: Debug Nearest Method" })
+    vim.keymap.set("n", "<leader>dt", function() require('jdtls').test_class() end, { desc = "JDTLS: Debug Test Class" })
+
   end,
 }

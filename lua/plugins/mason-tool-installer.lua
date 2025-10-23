@@ -1,23 +1,25 @@
 return {
-	{
-		"WhoIsSethDaniel/mason-tool-installer.nvim",
-		event = "User MasonAttach",
-		opts = {
-			ensure_installed = {
-				"stylua",
-				"prettier",
-				"black",
-				"clang-format",
-				"shfmt",
-				"codelldb",
-				"lua-language-server",
-				"basedpyright",
-				"clangd",
-				"zls",
-				"rust-analyzer",
-				"cmake-language-server",
-				"r-languageserver", 
-			},
-		},
-	},
+  {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    dependencies = { "williamboman/mason.nvim" },
+
+    opts = {
+      ensure_installed = {
+        "stylua",
+        "prettier",
+        "black",
+        "clang-format",
+        "shfmt",
+
+        "codelldb",
+        "debugpy",
+        "delve",
+        "java-debug-adapter",
+        "java-test",
+      },
+      run_on_start = true,
+      debounce_hours = nil,
+      start_delay = 2000,
+    },
+  },
 }

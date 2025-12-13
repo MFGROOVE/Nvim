@@ -20,6 +20,8 @@ vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevelstart = 99
 vim.opt.foldenable = true
 
+vim.opt.swapfile = false
+
 vim.diagnostic.config({
 	virtual_text = { prefix = "●", spacing = 4 },
 	signs = {

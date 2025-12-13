@@ -2,11 +2,16 @@ return {
 	{
 		"amrbashir/nvim-docs-view",
 		cmd = { "DocsViewToggle" },
-		config = function()
-			require("docs-view").setup({
-				position = "right",
-				width = 60,
-			})
-		end,
+		opts = {
+			position = "right",
+			width = 60,
+		},
+		keys = {
+			{
+				"<C-k>",
+				"<cmd>DocsViewToggle<cr>",
+				desc = "Toggle Docs View",
+			},
+		},
 	},
 }

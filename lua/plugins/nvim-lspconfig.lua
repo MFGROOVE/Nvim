@@ -34,7 +34,8 @@ return {
 					"zls",
 					"cmake",
 					"r_language_server",
-					"jdtls",				},
+					"jdtls",
+				},
 				handlers = {
 					function(server_name)
 						if server_name == "jdtls" then

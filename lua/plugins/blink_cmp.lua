@@ -32,6 +32,8 @@ return {
 				["<C-d>"] = { "scroll_documentation_down", "fallback" },
 				["<Tab>"] = { "select_next", "fallback" },
 				["<S-Tab>"] = { "select_prev", "fallback" },
+				["<C-k>"] = { "show_documentation", "hide_documentation" },
+                ["<C-s>"] = { "show_signature", "hide_signature" },
 			},
 
 			signature = { enabled = true, window = { show_documentation = false } },
@@ -43,7 +45,15 @@ return {
 			},
 
 			-- (Default) Only show the documentation popup when manually triggered
-			completion = { documentation = { auto_show = true }, ghost_text = { enabled = true } },
+			completion = {
+				documentation = {
+					auto_show = true,
+					auto_show_delay_ms = 200,
+					treesitter_highlighting = true,
+					window = { border = "rounded" },
+				},
+				ghost_text = { enabled = true },
+			},
 
 			-- Default list of enabled providers defined so that you can extend it
 			-- elsewhere in your config, without redefining it, due to `opts_extend`

@@ -14,6 +14,7 @@ return {
 			{ "<leader>g", group = "Git" },
 			{ "<leader>o", group = "Organize" },
 			{ "<leader>c", group = "Cmake" },
+			{ "<leader>u", group = "Utility" },
 		},
 	},
 }

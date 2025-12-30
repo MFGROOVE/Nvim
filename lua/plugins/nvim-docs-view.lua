@@ -8,9 +8,9 @@ return {
 		},
 		keys = {
 			{
-				"<C-k>",
+				"<leader>ud",
 				"<cmd>DocsViewToggle<cr>",
-				desc = "Toggle Docs View",
+				desc = "Docs View",
 			},
 		},
 	},

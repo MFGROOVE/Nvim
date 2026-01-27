@@ -5,7 +5,7 @@ return {
 		config = function()
 			require("dapui").setup()
 			local dapui = require("dapui")
-			vim.keymap.set("n", "<Leader>db", function()
+			vim.keymap.set("n", "<Leader>dt", function()
 				dapui.toggle()
 			end, { desc = "DAP UI: Toggle" })
 

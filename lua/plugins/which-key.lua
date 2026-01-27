@@ -15,6 +15,8 @@ return {
 			{ "<leader>o", group = "Organize" },
 			{ "<leader>c", group = "Cmake" },
 			{ "<leader>u", group = "Utility" },
+			{ "<leader>s", group = "Split Window" },
+			{ "<leader>p", group = "Python" },
 		},
 	},
 }

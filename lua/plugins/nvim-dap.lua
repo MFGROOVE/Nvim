@@ -1,104 +1,142 @@
 return {
-	{
-		"mfussenegger/nvim-dap",
-		dependencies = {
-			"rcarriga/nvim-dap-ui",
-			"nvim-neotest/nvim-nio",
-		},
-		config = function()
-			local dap = require("dap")
-			local dapui = require("dapui")
-
-			dapui.setup()
-
-			dap.listeners.before.attach.dapui_config = function()
-				dapui.open()
-			end
-			dap.listeners.before.launch.dapui_config = function()
-				dapui.open()
-			end
-			dap.listeners.before.event_terminated.dapui_config = function()
-				dapui.close()
-			end
-			dap.listeners.before.event_exited.dapui_config = function()
-				dapui.close()
-			end
-
-			dap.listeners.after.event_initialized["dap_arrow_keys"] = function()
-				local opts = { buffer = 0, noremap = true, silent = true }
-				vim.keymap.set("n", "<Down>", dap.step_over, opts)
-				vim.keymap.set("n", "<Right>", dap.step_into, opts)
-				vim.keymap.set("n", "<Left>", dap.step_out, opts)
-				vim.keymap.set("n", "<Up>", dap.continue, opts)
-			end
-
-			vim.keymap.set("n", "<Leader>db", dap.toggle_breakpoint, { desc = "DAP: Toggle Breakpoint" })
-
-			-- Standard Java Debugging
-			vim.keymap.set("n", "<Leader>dc", dap.continue, { desc = "DAP: Continue/Start" })
-
-			vim.api.nvim_create_autocmd("FileType", {
-				pattern = "java",
-				callback = function()
-					local ok, jdtls = pcall(require, "jdtls")
-					if ok then
-						jdtls.setup_dap({ hotcodereplace = "auto" })
-					end
-				end,
-			})
-
-			-- Android ADB Connect
-			local function debug_android()
-				if vim.bo.filetype ~= "java" then
-					vim.notify("Error: Open a .java file first.", vim.log.levels.ERROR)
-					return
-				end
-
-				if not dap.adapters.java then
-					local ok, jdtls = pcall(require, "jdtls")
-					if ok then
-						jdtls.setup_dap({ hotcodereplace = "auto" })
-					end
-				end
-
-				local package_name = vim.fn.input("Package Name: ", "")
-				if package_name == "" then
-					return
-				end
-
-				local handle = io.popen("adb shell pidof " .. package_name)
-				local result = handle:read("*a")
-				handle:close()
-
-				local pid = result:gsub("%s+", "")
-				if pid == "" then
-					vim.notify("Error: App not found (Empty PID).", vim.log.levels.ERROR)
-					return
-				end
-
-				local port = math.random(50000, 60000)
-				os.execute(string.format("adb forward tcp:%d jdwp:%s", port, pid))
-
-				vim.notify("Attached: PID " .. pid .. " -> Port " .. port, vim.log.levels.INFO)
-
-				local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
-				local ok_jdtls, jdtls_dap = pcall(require, "jdtls.dap")
-				if ok_jdtls and jdtls_dap.find_util_project_name then
-					project_name = jdtls_dap.find_util_project_name() or project_name
-				end
-
-				dap.run({
-					type = "java",
-					request = "attach",
-					name = "Android Attach",
-					hostName = "localhost",
-					port = port,
-					projectName = project_name,
-				})
-			end
-
-			vim.keymap.set("n", "<Leader>da", debug_android, { desc = "DAP: Debug Android" })
-			vim.api.nvim_create_user_command("DebugAndroid", debug_android, {})
-		end,
+	"mfussenegger/nvim-dap",
+	dependencies = {
+		"rcarriga/nvim-dap-ui",
+		"nvim-neotest/nvim-nio",
+		"jay-babu/mason-nvim-dap.nvim",
+		"theHamsta/nvim-dap-virtual-text",
 	},
+	config = function()
+		local dap = require("dap")
+		local dapui = require("dapui")
+		local last_package = ""
+
+		local signs = {
+			DapBreakpoint = { text = "●", texthl = "DapBreakpoint", linehl = "", numhl = "" },
+			DapBreakpointCondition = { text = "●", texthl = "DapBreakpointCondition", linehl = "", numhl = "" },
+			DapLogPoint = { text = "◆", texthl = "DapLogPoint", linehl = "", numhl = "" },
+			DapStopped = { text = "▶", texthl = "DapStopped", linehl = "DapStoppedLine", numhl = "" },
+		}
+		for type, icon in pairs(signs) do
+			vim.fn.sign_define(type, icon)
+		end
+
+		vim.api.nvim_set_hl(0, "DapBreakpoint", { ctermbg = 0, fg = "#993939", bg = "#31353f" })
+		vim.api.nvim_set_hl(0, "DapStopped", { ctermbg = 0, fg = "#98c379", bg = "#31353f" })
+		vim.api.nvim_set_hl(0, "DapStoppedLine", { ctermbg = 0, bg = "#31353f" })
+
+		dapui.setup({
+			layouts = {
+				{
+					elements = {
+						{ id = "scopes", size = 0.50 },
+						{ id = "breakpoints", size = 0.20 },
+						{ id = "stacks", size = 0.30 },
+					},
+					size = 40,
+					position = "left",
+				},
+				{
+					elements = {
+						{ id = "repl", size = 0.5 },
+						{ id = "console", size = 0.5 },
+					},
+					size = 10,
+					position = "bottom",
+				},
+			},
+		})
+
+		require("nvim-dap-virtual-text").setup({
+			display_callback = function(variable, buf, stackframe, node, options)
+				if options.virt_text_pos == "inline" then
+					return " = " .. variable.value
+				else
+					return variable.name .. " = " .. variable.value
+				end
+			end,
+		})
+
+		require("mason-nvim-dap").setup({
+			automatic_installation = true,
+			ensure_installed = {
+				"codelldb",
+				"python",
+			},
+			handlers = {
+				function(config)
+					require("mason-nvim-dap").default_setup(config)
+				end,
+			},
+		})
+
+		dap.listeners.before.attach.dapui_config = function() dapui.open() end
+		dap.listeners.before.launch.dapui_config = function() dapui.open() end
+		dap.listeners.before.event_terminated.dapui_config = function() dapui.close() end
+		dap.listeners.before.event_exited.dapui_config = function() dapui.close() end
+
+		dap.listeners.after.event_initialized["dap_arrow_keys"] = function()
+			local opts = { buffer = 0, noremap = true, silent = true }
+			vim.keymap.set("n", "<Down>", dap.step_over, opts)
+			vim.keymap.set("n", "<Right>", dap.step_into, opts)
+			vim.keymap.set("n", "<Left>", dap.step_out, opts)
+			vim.keymap.set("n", "<Up>", dap.continue, opts)
+		end
+
+		local function debug_waydroid()
+			local handle = io.popen("waydroid status | grep 'IP:' | awk '{print $2}'")
+			local ip = handle:read("*a"):gsub("%s+", "")
+			handle:close()
+
+			if ip == "" then
+				ip = "192.168.240.112"
+			end
+
+			local connect_out = vim.fn.system("adb connect " .. ip .. ":5555")
+
+			if not (string.find(connect_out, "connected") or string.find(connect_out, "already connected")) then
+				vim.notify("Waydroid Connection Failed.", vim.log.levels.ERROR)
+				return
+			end
+
+			local prompt = last_package ~= "" and ("Package Name [" .. last_package .. "]: ") or "Package Name: "
+			local input = vim.fn.input(prompt)
+
+			if input == "" and last_package ~= "" then
+				input = last_package
+			elseif input ~= "" then
+				last_package = input
+			else
+				return
+			end
+
+			local pid_output = vim.fn.system("adb shell pidof -s " .. input)
+			local pid = string.match(pid_output, "%d+")
+
+			if not pid then
+				vim.notify("App not running in Waydroid: " .. input, vim.log.levels.ERROR)
+				return
+			end
+
+			local port = math.random(50000, 60000)
+			vim.fn.system(string.format("adb forward tcp:%d jdwp:%s", port, pid))
+
+			vim.notify("Debugging: " .. input .. " (PID: " .. pid .. ")", vim.log.levels.INFO)
+
+			dap.run({
+				type = "java",
+				request = "attach",
+				name = "Waydroid Debug",
+				hostName = "localhost",
+				port = port,
+			})
+		end
+
+		vim.keymap.set("n", "<Leader>db", dap.toggle_breakpoint, { desc = "Debug: Toggle Breakpoint" })
+		vim.keymap.set("n", "<Leader>dc", dap.continue, { desc = "Debug: Start/Continue" })
+		vim.keymap.set("n", "<Leader>dx", dap.terminate, { desc = "Debug: Stop/Terminate" })
+		vim.keymap.set("n", "<Leader>dt", dapui.toggle, { desc = "Debug: Toggle UI" })
+		vim.keymap.set("n", "<Leader>di", function() require("dap.ui.widgets").hover() end, { desc = "Debug: Hover Info" })
+		vim.keymap.set("n", "<Leader>dw", debug_waydroid, { desc = "Debug: Waydroid" })
+	end,
 }

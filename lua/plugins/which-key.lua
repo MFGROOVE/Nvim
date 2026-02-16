@@ -7,7 +7,7 @@ return {
 	end,
 	opts = {
 		spec = {
-			{ "<leader>r", group = "Run/Compiler" },
+			{ "<leader>x", group = "Run/Compiler" },
 			{ "<leader>t", group = "Tests" },
 			{ "<leader>d", group = "Debug" },
 			{ "<leader>f", group = "Find/Files" },
@@ -17,6 +17,9 @@ return {
 			{ "<leader>u", group = "Utility" },
 			{ "<leader>s", group = "Split Window" },
 			{ "<leader>p", group = "Python" },
+			{ "<leader>l", group = "LSP" },
+			{ "<leader>r", group = "Refactor" },
+			{ "<leader>q", group = "Trouble/Quickfix" },
 		},
 	},
 }

@@ -19,6 +19,7 @@ return {
 				"cmake",
 				"r",
 				"java",
+				"kotlin",
 			},
 			sync_install = false,
 			highlight = { enable = true },

@@ -2,7 +2,7 @@ return {
 	{
 		"saghen/blink.cmp",
 		-- optional: provides snippets for the snippet source
-		dependencies = { "rafamadriz/friendly-snippets" },
+		dependencies = { "rafamadriz/friendly-snippets", "rafamadriz/friendly-snippets" },
 
 		-- use a release tag to download pre-built binaries
 		version = "1.*",
@@ -26,6 +26,9 @@ return {
 			-- C-k: Toggle signature help (if signature.enabled = true)
 			--
 			-- See :h blink-cmp-config-keymap for defining your own keymap
+			snippets = {
+				preset = "luasnip",
+			},
 			keymap = {
 				preset = "enter",
 				["<C-u>"] = { "scroll_documentation_up", "fallback" },
@@ -33,7 +36,7 @@ return {
 				["<Tab>"] = { "select_next", "fallback" },
 				["<S-Tab>"] = { "select_prev", "fallback" },
 				["<C-k>"] = { "show_documentation", "hide_documentation" },
-                ["<C-s>"] = { "show_signature", "hide_signature" },
+				["<C-s>"] = { "show_signature", "hide_signature" },
 			},
 
 			signature = { enabled = true, window = { show_documentation = false } },
@@ -53,6 +56,16 @@ return {
 					window = { border = "rounded" },
 				},
 				ghost_text = { enabled = true },
+				menu = {
+					draw = {
+						columns = {
+							{ "kind_icon" },
+							{ "label", "label_description", gap = 1 },
+							{ "kind" },
+						},
+						treesitter = { "lsp" },
+					},
+				},
 			},
 
 			-- Default list of enabled providers defined so that you can extend it

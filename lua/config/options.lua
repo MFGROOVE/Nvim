@@ -42,4 +42,4 @@ vim.diagnostic.config({
 	},
 })
 
-vim.lsp.set_log_level("warn")
+

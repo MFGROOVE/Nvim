@@ -33,13 +33,48 @@ return {
 		local on_attach = function(client, bufnr)
 			local opts = { buffer = bufnr, silent = true }
 
-			vim.keymap.set("n", "gd", "<cmd>Lspsaga goto_definition<CR>", opts)
-			vim.keymap.set("n", "gr", "<cmd>Lspsaga finder<CR>", opts)
-			vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
-			vim.keymap.set({ "n", "v" }, "<leader>ca", "<cmd>Lspsaga code_action<CR>", opts)
-			vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
-			vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
-
+			vim.keymap.set(
+				"n",
+				"<leader>ld",
+				"<cmd>Lspsaga goto_definition<CR>",
+				{ buffer = bufnr, desc = "Go to Definition", silent = true }
+			)
+			vim.keymap.set(
+				"n",
+				"<leader>lr",
+				"<cmd>Lspsaga finder<CR>",
+				{ buffer = bufnr, desc = "Find References", silent = true }
+			)
+			vim.keymap.set(
+				"n",
+				"<leader>ln",
+				vim.lsp.buf.rename,
+				{ buffer = bufnr, desc = "Rename Symbol", silent = true }
+			)
+			vim.keymap.set(
+				{ "n", "v" },
+				"<leader>la",
+				"<cmd>Lspsaga code_action<CR>",
+				{ buffer = bufnr, desc = "Code Action", silent = true }
+			)
+			vim.keymap.set(
+				"n",
+				"<leader>li",
+				"<cmd>Lspsaga hover_doc<CR>",
+				{ buffer = bufnr, desc = "Hover Documentation", silent = true }
+			)
+			vim.keymap.set(
+				"n",
+				"[d",
+				vim.diagnostic.goto_prev,
+				{ buffer = bufnr, desc = "Previous Diagnostic", silent = true }
+			)
+			vim.keymap.set(
+				"n",
+				"]d",
+				vim.diagnostic.goto_next,
+				{ buffer = bufnr, desc = "Next Diagnostic", silent = true }
+			)
 			if client.server_capabilities.inlayHintProvider then
 				vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
 			end
@@ -69,6 +104,10 @@ return {
 							{
 								name = "JavaSE-17",
 								path = "/usr/lib/jvm/java-17-openjdk/",
+							},
+							{
+								name = "JavaSE-21",
+								path = "/usr/lib/jvm/java-21-openjdk/",
 							},
 						},
 					},

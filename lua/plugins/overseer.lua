@@ -59,9 +59,9 @@ return {
 	},
 
 	keys = {
-		{ "<leader>rr", "<cmd>OverseerRun<CR>", desc = "Run Project/OverseerRun" },
-		{ "<leader>rl", "<cmd>OverseerToggle<CR>", desc = "Task List/OverseerToggle" },
-		{ "<leader>ra", "<cmd>OverseerQuickAction<CR>", desc = "Task Action/OverseerQuickAction" },
-		{ "<leader>rb", "<cmd>OverseerBuild<CR>", desc = "Run Default Task/OverseerBuild" },
+		{ "<leader>xr", "<cmd>OverseerRun<CR>", desc = "Run Project/OverseerRun" },
+		{ "<leader>xl", "<cmd>OverseerToggle<CR>", desc = "Task List/OverseerToggle" },
+		{ "<leader>xa", "<cmd>OverseerQuickAction<CR>", desc = "Task Action/OverseerQuickAction" },
+		{ "<leader>xb", "<cmd>OverseerBuild<CR>", desc = "Run Default Task/OverseerBuild" },
 	},
 }

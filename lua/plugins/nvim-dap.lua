@@ -1,14 +1,11 @@
 return {
 	"mfussenegger/nvim-dap",
 	dependencies = {
-		"rcarriga/nvim-dap-ui",
-		"nvim-neotest/nvim-nio",
 		"jay-babu/mason-nvim-dap.nvim",
 		"theHamsta/nvim-dap-virtual-text",
 	},
 	config = function()
 		local dap = require("dap")
-		local dapui = require("dapui")
 		local last_package = ""
 
 		local signs = {
@@ -25,28 +22,6 @@ return {
 		vim.api.nvim_set_hl(0, "DapStopped", { ctermbg = 0, fg = "#98c379", bg = "#31353f" })
 		vim.api.nvim_set_hl(0, "DapStoppedLine", { ctermbg = 0, bg = "#31353f" })
 
-		dapui.setup({
-			layouts = {
-				{
-					elements = {
-						{ id = "scopes", size = 0.50 },
-						{ id = "breakpoints", size = 0.20 },
-						{ id = "stacks", size = 0.30 },
-					},
-					size = 40,
-					position = "left",
-				},
-				{
-					elements = {
-						{ id = "repl", size = 0.5 },
-						{ id = "console", size = 0.5 },
-					},
-					size = 10,
-					position = "bottom",
-				},
-			},
-		})
-
 		require("nvim-dap-virtual-text").setup({
 			display_callback = function(variable, buf, stackframe, node, options)
 				if options.virt_text_pos == "inline" then
@@ -59,10 +34,7 @@ return {
 
 		require("mason-nvim-dap").setup({
 			automatic_installation = true,
-			ensure_installed = {
-				"codelldb",
-				"python",
-			},
+			ensure_installed = { "codelldb", "python" },
 			handlers = {
 				function(config)
 					require("mason-nvim-dap").default_setup(config)
@@ -70,18 +42,24 @@ return {
 			},
 		})
 
-		dap.listeners.before.attach.dapui_config = function() dapui.open() end
-		dap.listeners.before.launch.dapui_config = function() dapui.open() end
-		dap.listeners.before.event_terminated.dapui_config = function() dapui.close() end
-		dap.listeners.before.event_exited.dapui_config = function() dapui.close() end
-
-		dap.listeners.after.event_initialized["dap_arrow_keys"] = function()
-			local opts = { buffer = 0, noremap = true, silent = true }
-			vim.keymap.set("n", "<Down>", dap.step_over, opts)
-			vim.keymap.set("n", "<Right>", dap.step_into, opts)
-			vim.keymap.set("n", "<Left>", dap.step_out, opts)
-			vim.keymap.set("n", "<Up>", dap.continue, opts)
+		local function set_arrow_keys()
+			vim.keymap.set("n", "<Down>", dap.step_over, { desc = "Debug: Step Over" })
+			vim.keymap.set("n", "<Right>", dap.step_into, { desc = "Debug: Step Into" })
+			vim.keymap.set("n", "<Left>", dap.step_out, { desc = "Debug: Step Out" })
+			vim.keymap.set("n", "<Up>", dap.continue, { desc = "Debug: Continue/Play" })
 		end
+
+		local function remove_arrow_keys()
+			pcall(vim.keymap.del, "n", "<Down>")
+			pcall(vim.keymap.del, "n", "<Right>")
+			pcall(vim.keymap.del, "n", "<Left>")
+			pcall(vim.keymap.del, "n", "<Up>")
+		end
+
+		dap.listeners.after.event_initialized["dap_arrow_keys"] = set_arrow_keys
+		dap.listeners.after.event_terminated["dap_arrow_keys"] = remove_arrow_keys
+		dap.listeners.after.event_exited["dap_arrow_keys"] = remove_arrow_keys
+		dap.listeners.after.disconnect["dap_arrow_keys"] = remove_arrow_keys
 
 		local function debug_waydroid()
 			local handle = io.popen("waydroid status | grep 'IP:' | awk '{print $2}'")
@@ -134,9 +112,10 @@ return {
 
 		vim.keymap.set("n", "<Leader>db", dap.toggle_breakpoint, { desc = "Debug: Toggle Breakpoint" })
 		vim.keymap.set("n", "<Leader>dc", dap.continue, { desc = "Debug: Start/Continue" })
-		vim.keymap.set("n", "<Leader>dx", dap.terminate, { desc = "Debug: Stop/Terminate" })
-		vim.keymap.set("n", "<Leader>dt", dapui.toggle, { desc = "Debug: Toggle UI" })
-		vim.keymap.set("n", "<Leader>di", function() require("dap.ui.widgets").hover() end, { desc = "Debug: Hover Info" })
 		vim.keymap.set("n", "<Leader>dw", debug_waydroid, { desc = "Debug: Waydroid" })
+		vim.keymap.set("n", "<Leader>dx", function()
+			remove_arrow_keys()
+			dap.terminate()
+		end, { desc = "Debug: Stop/Terminate" })
 	end,
 }

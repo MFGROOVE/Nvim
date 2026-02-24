@@ -66,12 +66,23 @@ return {
 						server_opts.filetypes = { "r", "rmd" }
 						server_opts.root_dir = lspconfig.util.root_pattern(".Rproj", ".git", ".here")
 					elseif server_name == "kotlin_language_server" then
+						server_opts.cmd = {
+							"/usr/lib/jvm/java-17-openjdk/bin/java",
+							"-jar",
+							vim.fn.expand(
+								"~/.local/share/nvim/mason/packages/kotlin-language-server/server/lib/kotlin-language-server.jar"
+							),
+						}
 						server_opts.root_dir = lspconfig.util.root_pattern(
 							"settings.gradle",
 							"settings.gradle.kts",
 							"build.gradle",
-							"build.gradle.kts"
+							"build.gradle.kts",
+							".git"
 						)
+						server_opts.init_options = {
+							storagePath = vim.fn.stdpath("cache") .. "/kotlin-language-server",
+						}
 					end
 
 					lspconfig[server_name].setup(server_opts)

@@ -2,6 +2,8 @@ return {
 	{
 		"akinsho/toggleterm.nvim",
 		version = "*",
+		cmd = "ToggleTerm",
+		keys = { { "<leader>ut", desc = "Toggle Terminal" } },
 		config = function()
 			require("toggleterm").setup({
 				direction = "horizontal",

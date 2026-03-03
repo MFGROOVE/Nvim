@@ -3,6 +3,15 @@ return {
 	dependencies = {
 		"jay-babu/mason-nvim-dap.nvim",
 		"theHamsta/nvim-dap-virtual-text",
+		"rcarriga/nvim-dap-ui",
+	},
+	keys = {
+		{ "<Leader>db", desc = "Debug: Toggle Breakpoint" },
+		{ "<Leader>dc", desc = "Debug: Start/Continue" },
+		{ "<Leader>dw", desc = "Debug: Waydroid" },
+		{ "<Leader>dx", desc = "Debug: Stop/Terminate" },
+		{ "<Leader>dt", desc = "Debug: Toggle UI" },
+		{ "<Leader>dh", desc = "Debug: Hover Info" },
 	},
 	config = function()
 		local dap = require("dap")

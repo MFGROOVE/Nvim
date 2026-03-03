@@ -5,31 +5,37 @@ vim.opt.splitright = true
 vim.opt.wrap = false
 vim.opt.expandtab = true
 vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.autoindent = true
 vim.opt.clipboard = "unnamedplus"
 vim.opt.scrolloff = 999
 vim.opt.virtualedit = "block"
 vim.opt.inccommand = "split"
 vim.opt.ignorecase = true
 vim.opt.termguicolors = true
-vim.o.autochdir = true
+vim.opt.autochdir = true
 vim.opt.updatetime = 300
 vim.opt.laststatus = 3
+vim.opt.fileencoding = "utf-8"
+vim.opt.fileformat = "unix"
+vim.opt.fixendofline = true
+vim.opt.swapfile = false
 
 vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevelstart = 99
 vim.opt.foldenable = true
 
-vim.opt.swapfile = false
+vim.opt.cinoptions = "g0"
 
 vim.diagnostic.config({
 	virtual_text = { prefix = "●", spacing = 4 },
 	signs = {
 		text = {
-			[vim.diagnostic.severity.ERROR] = " ",
-			[vim.diagnostic.severity.WARN] = " ",
-			[vim.diagnostic.severity.HINT] = " ",
-			[vim.diagnostic.severity.INFO] = " ",
+			[vim.diagnostic.severity.ERROR] = "󰅚 ",
+			[vim.diagnostic.severity.WARN] = "󰀪 ",
+			[vim.diagnostic.severity.HINT] = "󰌶 ",
+			[vim.diagnostic.severity.INFO] = "󰋽 ",
 		},
 	},
 	underline = true,
@@ -41,5 +47,3 @@ vim.diagnostic.config({
 		focusable = false,
 	},
 })
-
-

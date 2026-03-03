@@ -11,11 +11,19 @@ return {
 		ls.config.set_config({
 			history = true,
 			updateevents = "TextChanged,TextChangedI",
+			delete_check_events = "TextChanged",
+			region_check_events = "CursorMoved",
 		})
 
 		local function get_package_name()
 			local path = vim.fn.expand("%:p")
-			local _, end_idx = string.find(path, "src/main/java/")
+			local pattern = "src/.-/java/"
+			local _, end_idx = string.find(path, pattern)
+
+			if not end_idx then
+				pattern = "src/.-/kotlin/"
+				_, end_idx = string.find(path, pattern)
+			end
 
 			if end_idx then
 				local sub_path = string.sub(path, end_idx + 1)
@@ -23,7 +31,7 @@ return {
 				return string.gsub(package_path, "/", ".")
 			end
 
-			return "pacote.nao.encontrado"
+			return "package.not.found"
 		end
 
 		ls.add_snippets("java", {
@@ -31,6 +39,13 @@ return {
 				t("package "),
 				f(get_package_name, {}),
 				t(";"),
+			}),
+		})
+
+		ls.add_snippets("kotlin", {
+			s("pack", {
+				t("package "),
+				f(get_package_name, {}),
 			}),
 		})
 	end,

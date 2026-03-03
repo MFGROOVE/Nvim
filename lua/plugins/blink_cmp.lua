@@ -2,7 +2,7 @@ return {
 	{
 		"saghen/blink.cmp",
 		-- optional: provides snippets for the snippet source
-		dependencies = { "rafamadriz/friendly-snippets", "rafamadriz/friendly-snippets" },
+		dependencies = { "rafamadriz/friendly-snippets", "L3MON4D3/LuaSnip" },
 
 		-- use a release tag to download pre-built binaries
 		version = "1.*",
@@ -37,6 +37,9 @@ return {
 				["<S-Tab>"] = { "select_prev", "fallback" },
 				["<C-k>"] = { "show_documentation", "hide_documentation" },
 				["<C-s>"] = { "show_signature", "hide_signature" },
+				["<C-l>"] = { "snippet_forward", "fallback" },
+				["<C-h>"] = { "snippet_backward", "fallback" },
+				["<C-e>"] = { "hide", "fallback" },
 			},
 
 			signature = { enabled = true, window = { show_documentation = false } },

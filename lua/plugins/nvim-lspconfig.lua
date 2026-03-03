@@ -4,23 +4,17 @@ return {
 	dependencies = {
 		"williamboman/mason.nvim",
 		"williamboman/mason-lspconfig.nvim",
-		"Saghen/blink.cmp",
+		"saghen/blink.cmp",
 	},
 	config = function()
 		local lspconfig = require("lspconfig")
 		local mason_lspconfig = require("mason-lspconfig")
-		local capabilities = require("blink.cmp").get_lsp_capabilities()
+
+		local default_capabilities = vim.lsp.protocol.make_client_capabilities()
+		local capabilities =
+			vim.tbl_deep_extend("force", default_capabilities, require("blink.cmp").get_lsp_capabilities())
 
 		local on_attach = function(client, bufnr)
-			local opts = { buffer = bufnr, silent = true }
-			vim.keymap.set("n", "<leader>ld", "<cmd>Lspsaga goto_definition<CR>", opts)
-			vim.keymap.set("n", "<leader>lr", "<cmd>Lspsaga finder<CR>", opts)
-			vim.keymap.set("n", "<leader>ln", vim.lsp.buf.rename, opts)
-			vim.keymap.set({ "n", "v" }, "<leader>la", "<cmd>Lspsaga code_action<CR>", opts)
-			vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
-			vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
-			vim.keymap.set("n", "<leader>li", "<cmd>Lspsaga hover_doc<CR>", opts)
-
 			client.server_capabilities.documentFormattingProvider = false
 			client.server_capabilities.documentRangeFormattingProvider = false
 			if client.server_capabilities.inlayHintProvider then
@@ -58,21 +52,58 @@ return {
 
 					local server_opts = { on_attach = on_attach, capabilities = capabilities }
 
-					if server_name == "rust_analyzer" then
-						server_opts.settings = { ["rust-analyzer"] = { check = { command = "clippy" } } }
+					if server_name == "clangd" then
+						server_opts.cmd = {
+							"clangd",
+							"--completion-style=detailed",
+							"--header-insertion=iwyu",
+							"--clang-tidy",
+						}
+					elseif server_name == "rust_analyzer" then
+						server_opts.settings = {
+							["rust-analyzer"] = {
+								check = { command = "clippy" },
+								completion = {
+									fullFunctionSignatures = { enable = true },
+									postfix = { enable = true },
+								},
+							},
+						}
 					elseif server_name == "lua_ls" then
-						server_opts.settings = { Lua = { diagnostics = { globals = { "vim" } } } }
+						server_opts.settings = {
+							Lua = {
+								diagnostics = { globals = { "vim" } },
+								completion = {
+									callSnippet = "Replace",
+									displayContext = 1,
+								},
+							},
+						}
+					elseif server_name == "basedpyright" then
+						server_opts.settings = {
+							basedpyright = {
+								analysis = {
+									typeCheckingMode = "standard",
+									autoImportCompletions = true,
+								},
+							},
+						}
+					elseif server_name == "zls" then
+						server_opts.settings = {
+							zls = {
+								enable_argument_placeholders = true,
+								completion_parse_comments = true,
+							},
+						}
 					elseif server_name == "r_language_server" then
 						server_opts.filetypes = { "r", "rmd" }
 						server_opts.root_dir = lspconfig.util.root_pattern(".Rproj", ".git", ".here")
 					elseif server_name == "kotlin_language_server" then
-						server_opts.cmd = {
-							"/usr/lib/jvm/java-17-openjdk/bin/java",
-							"-jar",
-							vim.fn.expand(
-								"~/.local/share/nvim/mason/packages/kotlin-language-server/server/lib/kotlin-language-server.jar"
-							),
+						server_opts.cmd_env = {
+							JAVA_HOME = "/usr/lib/jvm/java-21-openjdk",
+							PATH = "/usr/lib/jvm/java-21-openjdk/bin:" .. vim.env.PATH,
 						}
+
 						server_opts.root_dir = lspconfig.util.root_pattern(
 							"settings.gradle",
 							"settings.gradle.kts",
@@ -80,8 +111,10 @@ return {
 							"build.gradle.kts",
 							".git"
 						)
+
 						server_opts.init_options = {
 							storagePath = vim.fn.stdpath("cache") .. "/kotlin-language-server",
+							externalSources = { useKlsScheme = true },
 						}
 					end
 

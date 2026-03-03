@@ -30,6 +30,14 @@ return {
 			default_format_opts = {
 				lsp_format = "fallback",
 			},
+			formatters = {
+				prettier = {
+					prepend_args = { "--tab-width", "4" },
+				},
+				["clang-format"] = {
+					prepend_args = { "--style={BasedOnStyle: LLVM, IndentWidth: 4, UseTab: Never}" },
+				},
+			},
 		},
 	},
 }

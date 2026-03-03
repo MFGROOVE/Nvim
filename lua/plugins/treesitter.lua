@@ -23,7 +23,7 @@ return {
 			},
 			sync_install = false,
 			highlight = { enable = true },
-			indent = { enable = true, disable = { "c", "cpp", "java" } },
+			indent = { enable = true},
 		},
 		config = function(_, opts)
 			require("nvim-treesitter.configs").setup(opts)

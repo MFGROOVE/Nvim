@@ -10,57 +10,64 @@ return {
 			{
 				"<leader>re",
 				function()
-					require("refactoring").refactor("Extract Function")
+					return require("refactoring").refactor("Extract Function")
 				end,
 				mode = "x",
+				expr = true,
 				desc = "Extract Function",
 			},
 			{
 				"<leader>rf",
 				function()
-					require("refactoring").refactor("Extract Function To File")
+					return require("refactoring").refactor("Extract Function To File")
 				end,
 				mode = "x",
+				expr = true,
 				desc = "Extract Function To File",
 			},
 			{
 				"<leader>rv",
 				function()
-					require("refactoring").refactor("Extract Variable")
+					return require("refactoring").refactor("Extract Variable")
 				end,
 				mode = "x",
+				expr = true,
 				desc = "Extract Variable",
 			},
 			{
 				"<leader>rI",
 				function()
-					require("refactoring").refactor("Inline Function")
+					return require("refactoring").refactor("Inline Function")
 				end,
 				mode = "n",
+				expr = true,
 				desc = "Inline Function",
 			},
 			{
 				"<leader>ri",
 				function()
-					require("refactoring").refactor("Inline Variable")
+					return require("refactoring").refactor("Inline Variable")
 				end,
 				mode = { "n", "x" },
+				expr = true,
 				desc = "Inline Variable",
 			},
 			{
 				"<leader>rbb",
 				function()
-					require("refactoring").refactor("Extract Block")
+					return require("refactoring").refactor("Extract Block")
 				end,
 				mode = "n",
+				expr = true,
 				desc = "Extract Block",
 			},
 			{
 				"<leader>rbf",
 				function()
-					require("refactoring").refactor("Extract Block To File")
+					return require("refactoring").refactor("Extract Block To File")
 				end,
 				mode = "n",
+				expr = true,
 				desc = "Extract Block To File",
 			},
 		},
@@ -68,35 +75,28 @@ return {
 			prompt_func_return_type = {
 				go = true,
 				java = true,
-
 				cpp = true,
 				c = true,
 				h = true,
 				hpp = true,
 				cxx = true,
-
 				rust = true,
-
 				zig = true,
 			},
 			prompt_func_param_type = {
 				go = true,
 				java = true,
-
 				cpp = true,
 				c = true,
 				h = true,
 				hpp = true,
 				cxx = true,
-
 				rust = true,
-
 				zig = true,
 			},
 			printf_statements = {},
 			print_var_statements = {},
-			show_success_message = false, -- shows a message with information about the refactor on success
-			-- i.e. [Refactor] Inlined 3 variable occurrences
+			show_success_message = false,
 		},
 	},
 }

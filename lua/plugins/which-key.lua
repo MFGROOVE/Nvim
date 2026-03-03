@@ -20,6 +20,7 @@ return {
 			{ "<leader>l", group = "LSP" },
 			{ "<leader>r", group = "Refactor" },
 			{ "<leader>q", group = "Trouble/Quickfix" },
+			{ "<leader>m", group = "Multicursor" },
 		},
 	},
 }

@@ -13,7 +13,18 @@ vim.opt.virtualedit = "block"
 vim.opt.inccommand = "split"
 vim.opt.ignorecase = true
 vim.opt.termguicolors = true
-vim.opt.autochdir = true
+vim.api.nvim_create_autocmd("BufEnter", {
+	callback = function()
+		local bufname = vim.api.nvim_buf_get_name(0)
+		if bufname == "" then
+			return
+		end
+		local dir = vim.fn.fnamemodify(bufname, ":h")
+		if vim.fn.isdirectory(dir) == 1 and dir:match("^/home/") then
+			vim.cmd.lcd(dir)
+		end
+	end,
+})
 vim.opt.updatetime = 300
 vim.opt.laststatus = 3
 vim.opt.fileencoding = "utf-8"

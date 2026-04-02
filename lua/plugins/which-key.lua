@@ -21,6 +21,12 @@ return {
 			{ "<leader>r", group = "Refactor" },
 			{ "<leader>q", group = "Trouble/Quickfix" },
 			{ "<leader>m", group = "Multicursor" },
+			{ "]", group = "Next" },
+			{ "[", group = "Previous" },
+			{ "<leader>a", desc = "Swap parameter next" },
+			{ "<leader>A", desc = "Swap parameter previous" },
+			{ "a", group = "Around", mode = { "x", "o" } },
+			{ "i", group = "Inner", mode = { "x", "o" } },
 		},
 	},
 }

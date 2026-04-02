@@ -1,10 +1,6 @@
 return {
 	{
 		"gh-liu/fold_line.nvim",
-		event = "BufReadPost",
-		config = function()
-			vim.g.fold_line_char_open_start = "╭"
-			vim.g.fold_line_char_open_end = "╰"
-		end,
+		enabled = false,
 	},
 }

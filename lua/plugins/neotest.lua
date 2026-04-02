@@ -48,7 +48,11 @@ return {
 			},
 			adapters = {
 				require("neotest-python")({
-					dap = { justMyCode = false },
+					dap = {
+						justMyCode = false,
+						console = "integratedTerminal",
+					},
+					runner = "pytest",
 				}),
 				require("neotest-golang"),
 				require("rustaceanvim.neotest"),

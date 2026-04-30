@@ -32,10 +32,26 @@ vim.opt.fileformat = "unix"
 vim.opt.fixendofline = true
 vim.opt.swapfile = false
 
-vim.opt.foldmethod = "expr"
-vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevelstart = 99
 vim.opt.foldenable = true
+
+function _G.safe_foldexpr()
+	local ok, result = pcall(vim.treesitter.foldexpr)
+	if ok then
+		return result
+	end
+	return "0"
+end
+
+vim.api.nvim_create_autocmd("FileType", {
+	callback = function()
+		local ok = pcall(vim.treesitter.get_parser, 0)
+		if ok then
+			vim.wo.foldmethod = "expr"
+			vim.wo.foldexpr = "v:lua.safe_foldexpr()"
+		end
+	end,
+})
 
 vim.opt.cinoptions = "g0"
 

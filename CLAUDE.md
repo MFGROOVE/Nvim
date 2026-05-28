@@ -52,6 +52,11 @@ Key bindings: `<Tab>`/`<S-Tab>` navigate menu, `<C-l>`/`<C-h>` jump snippet plac
 | Java | clang-format (IndentWidth: 4) |
 | Markdown/JSON/YAML/HTML/CSS | prettier (tab-width: 4) |
 
+### Treesitter
+`lua/plugins/treesitter.lua` tracks the **`main` branch** of nvim-treesitter (and nvim-treesitter-textobjects), which uses the new API: parsers are installed via `require("nvim-treesitter").install({...})` (not the legacy `nvim-treesitter.configs` `setup{}`/`ensure_installed`), highlighting is started per-buffer with a `FileType` autocmd calling `vim.treesitter.start`, and textobject move/select calls take an explicit `"textobjects"` query group argument.
+
+Because the `main` branch dropped `nvim-treesitter.parsers.ft_to_lang` (and friends) that other plugins — notably Telescope's `utils.lua`, which captures a stale `ts_parsers` reference — still call, the `config` function installs a **compatibility shim**: it monkey-patches `ft_to_lang`, `get_parser`, `get_parser_configs`, and `available_parsers` back onto the parsers module, and re-applies them on `User LazyLoad` and `BufWinEnter` to cover plugins that `require` it later. If Telescope or other consumers start erroring about missing `ft_to_lang`/parser functions, this shim is the place to look.
+
 ### Testing (neotest)
 `lua/plugins/neotest.lua` with adapters: Python, Go, Rust (rustaceanvim), Zig, Java (neotest-java), C++ (neotest-gtest), CMake/CTest (neotest-ctest). Integrates with overseer.nvim for task running.
 
@@ -117,9 +122,10 @@ Restart Neovim to apply changes. Useful commands:
 - `:Lazy` / `:Lazy sync` — plugin manager
 - `:Mason` — LSP servers, formatters, DAP adapters
 - `:ConformInfo` — formatter status
-- `:TSUpdate` — treesitter parsers
+- `:TSUpdate` — treesitter parsers (legacy command; on the `main` branch parsers are managed via `require("nvim-treesitter").install` and `:TSInstall`/`:TSUpdate` from the new API)
 
 ## Known Issues
 
 - `lua/plugins/gitsings.lua` — filename typo (should be `gitsigns.lua`), but functional
 - `lua/plugins/nvim-jdtls.lua` — may need verification; jdtls setup depends on this file being correct
+- `lua/plugins/treesitter.lua` — the `config` function contains leftover debug logging that appends to `/tmp/nvim-shim-debug.log` on every startup; safe to remove once the parser shim is confirmed stable

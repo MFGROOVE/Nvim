@@ -53,7 +53,14 @@ vim.api.nvim_create_autocmd("FileType", {
 	end,
 })
 
-vim.opt.cinoptions = "g0"
+vim.opt.cinoptions = "g0,:0"
+
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = { "c", "cpp" },
+	callback = function()
+		vim.bo.cindent = true
+	end,
+})
 
 vim.diagnostic.config({
 	virtual_text = { prefix = "●", spacing = 4 },

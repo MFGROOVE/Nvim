@@ -8,41 +8,6 @@ return {
 			{ "nvim-treesitter/nvim-treesitter-textobjects", branch = "main" },
 		},
 		config = function()
-			local parsers = require("nvim-treesitter.parsers")
-			parsers.ft_to_lang = function(ft)
-				return vim.treesitter.language.get_lang(ft) or ft
-			end
-			parsers.get_parser_configs = parsers.get_parser_configs or function() return {} end
-			parsers.available_parsers = parsers.available_parsers or function() return {} end
-			parsers.get_parser = parsers.get_parser or function(buf, lang)
-				return vim.treesitter.get_parser(buf, lang)
-			end
-
-			-- Telescope's utils.lua captures a stale ts_parsers reference; also patch
-			-- via package.loaded with a metatable so any future require gets ft_to_lang.
-			local function reapply()
-				local p = package.loaded["nvim-treesitter.parsers"]
-				if type(p) == "table" and not p.ft_to_lang then
-					p.ft_to_lang = parsers.ft_to_lang
-					p.get_parser = parsers.get_parser
-					p.get_parser_configs = parsers.get_parser_configs
-					p.available_parsers = parsers.available_parsers
-				end
-			end
-			reapply()
-			vim.api.nvim_create_autocmd({ "User" }, {
-				pattern = "LazyLoad",
-				callback = reapply,
-			})
-			vim.api.nvim_create_autocmd("BufWinEnter", { callback = reapply })
-
-			local fp = io.open("/tmp/nvim-shim-debug.log", "a")
-			if fp then
-				fp:write(os.date() .. " shim installed; ft_to_lang on parsers table = " .. tostring(parsers.ft_to_lang) .. "\n")
-				fp:write("  package.loaded[parsers] same identity = " .. tostring(parsers == package.loaded["nvim-treesitter.parsers"]) .. "\n")
-				fp:close()
-			end
-
 			require("nvim-treesitter").install({
 				"c",
 				"cpp",

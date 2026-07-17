@@ -35,14 +35,16 @@ return {
 				["<C-d>"] = { "scroll_documentation_down", "fallback" },
 				["<Tab>"] = { "select_next", "fallback" },
 				["<S-Tab>"] = { "select_prev", "fallback" },
-				["<C-k>"] = { "show_documentation", "hide_documentation" },
+				["<C-k>"] = { "scroll_signature_up", "scroll_documentation_up", "show_documentation", "hide_documentation" },
 				["<C-s>"] = { "show_signature", "hide_signature" },
 				["<C-l>"] = { "snippet_forward", "fallback" },
 				["<C-h>"] = { "snippet_backward", "fallback" },
 				["<C-e>"] = { "hide", "fallback" },
+				-- C-j/C-k rolam a doc do completar OU a janela de assinatura, a que estiver aberta
+				["<C-j>"] = { "scroll_signature_down", "scroll_documentation_down", "fallback" },
 			},
 
-			signature = { enabled = true, window = { show_documentation = false } },
+			signature = { enabled = true, window = { show_documentation = true } },
 
 			appearance = {
 				-- 'mono' (default) for 'Nerd Font Mono' or 'normal' for 'Nerd Font'

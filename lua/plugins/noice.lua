@@ -5,7 +5,7 @@ return {
 		dependencies = { "MunifTanjim/nui.nvim", "rcarriga/nvim-notify" },
 		opts = {
 			lsp = {
-				signature = { enabled = true },
+				signature = { enabled = false },
 				hover = { enabled = false },
 				override = {
 					["vim.lsp.util.convert_input_to_markdown_lines"] = true,

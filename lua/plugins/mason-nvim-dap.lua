@@ -7,12 +7,14 @@ return {
 			"mfussenegger/nvim-dap",
 		},
 		opts = {
+			-- nomes de adapter do nvim-dap, não de pacote do mason
+			-- (python -> debugpy, javadbg -> java-debug-adapter, javatest -> java-test)
 			ensure_installed = {
 				"codelldb",
-				"debugpy",
+				"python",
 				"delve",
-				"java-debug-adapter",
-				"java-test",
+				"javadbg",
+				"javatest",
 			},
 			automatic_installation = true,
 			handlers = {},

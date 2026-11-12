@@ -1,0 +1,85 @@
+#+title: Código executável no Org Workbench
+
+Coloque o cursor dentro de um bloco e pressione C-c C-c em modo normal.
+Alternativa: :OrgWorkbench execute ou \obx.
+Para criar outro bloco: :OrgWorkbench insert-block python ou \obi.
+Para editar em uma janela com o filetype da linguagem: C-c '.
+Use :w nessa janela para aplicar ao Org e :q para voltar.
+
+* Python
+#+begin_src python :results output
+numeros = [1, 2, 3, 4, 5, 6]
+print("Soma:", sum(numeros))
+print("Dobro:", sum(numeros) * 2)
+#+end_src
+
+* Lua
+#+begin_src lua :results output
+for i = 1, 3 do
+  print("Lua", i)
+end
+#+end_src
+
+* JavaScript
+#+begin_src javascript :results output
+const numeros = [1, 2, 3];
+console.log(numeros.map(n => n * 2).join(", "));
+#+end_src
+
+* Shell
+#+begin_src bash :results output
+printf 'Olá de dentro do Org!\n'
+printf 'Diretório: %s\n' "$PWD"
+#+end_src
+
+* Valores e parâmetros
+#+name: dobrar
+#+begin_src python :results value :var x=21
+return x * 2
+#+end_src
+
+#+begin_src python :results value :var resposta=dobrar(x=21)
+return resposta
+#+end_src
+
+* Sessão Python compartilhada
+Execute estes dois blocos em ordem, ou use :OrgWorkbench execute-all.
+
+#+begin_src python :session pesquisa :results output
+numeros = [10, 20, 12]
+print("Dados carregados")
+#+end_src
+
+#+begin_src python :session pesquisa :results value
+sum(numeros)
+#+end_src
+
+* Dados em tabela
+#+name: notas
+| nome  | nota |
+|-------+------|
+| Ana   |    8 |
+| Bruno |    9 |
+
+#+begin_src python :results value table :var dados=notas
+return [[nome, nota * 2] for nome, nota in dados]
+#+end_src
+
+* Reutilizar código com noweb
+#+name: helpers
+#+begin_src python :eval never
+def quadrado(n):
+    return n * n
+#+end_src
+
+#+begin_src python :results value :noweb yes
+<<helpers>>
+return quadrado(7)
+#+end_src
+
+* Processo ou sessão
+Sem :session, cada execução tem seu próprio processo.
+Com :session pesquisa, o Python mantém variáveis entre os blocos.
+Para recomeçar: :OrgWorkbench session-reset pesquisa.
+O interpretador de cada linguagem precisa estar instalado.
+Os resultados são inseridos no documento; use :w para salvá-los.

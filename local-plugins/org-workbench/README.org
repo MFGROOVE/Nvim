@@ -1,0 +1,331 @@
+#+title: Org Workbench
+#+language: pt_BR
+
+* O que é
+Plugin independente para Neovim 0.11+, implementado do zero em Lua.
+Não depende de nvim-orgmode, Tree-sitter, Emacs ou Pandoc.
+
+Esta é uma primeira versão funcional. A equivalência completa com o Org mode
+do Emacs NÃO foi atingida. O parser e os comandos implementam um subconjunto
+do formato Org; recursos não reconhecidos permanecem como texto.
+
+* Começar nesta configuração
+Reinicie o Neovim. O spec em =lua/plugins/org.lua= carrega este diretório
+local pelo lazy.nvim. O nvim-orgmode anteriormente configurado deixou de ser
+uma dependência; não é necessário desinstalar seus arquivos.
+
+| Atalho | Ação                    |
+|--------+-------------------------|
+| \oi    | Abrir ~/org/inbox.org    |
+| \oa    | Agenda                  |
+| \oc    | Capturar tarefa ou nota |
+| \oj    | Abrir ~/org/journal.org  |
+
+=:OrgWorkbench= abre um menu. Use Tab após o comando para completar ações.
+A pasta de notas só é criada ao abrir um arquivo ou salvar uma captura.
+
+* Executar código dentro de um arquivo Org
+Crie ou abra um arquivo =.org= e escreva:
+
+#+begin_example
+#+begin_src python :results output
+print(6 * 7)
+#+end_src
+#+end_example
+
+Posicione o cursor dentro do bloco e pressione =C-c C-c= no modo normal
+ou execute =:OrgWorkbench execute=. O resultado aparece logo abaixo:
+
+#+begin_example
+#+RESULTS:
+: 42
+#+end_example
+
+=\obx= também executa. =\obi= ou =:OrgWorkbench insert-block python=
+cria um bloco. Executar novamente substitui a saída anterior. O processo
+roda em segundo plano, sem bloquear a edição. =\obk= ou
+=:OrgWorkbench cancel-execution= cancela o bloco sob o cursor.
+
+Há comandos configurados para Python (=python= / =python3=), Lua,
+JavaScript (=javascript= / =js=), sh, shell, bash, Ruby, Perl e R (=r= / =R=).
+Cada linguagem requer seu interpretador instalado. Python, Lua, JavaScript,
+sh e bash foram testados com execução real.
+
+Sem =:session=, cada bloco roda em um processo separado. Com
+=:session nome=, blocos Python compartilham um interpretador persistente;
+variáveis, funções e imports ficam disponíveis para os blocos seguintes.
+Sessões têm uma fila de execução. =:OrgWorkbench session-reset nome=
+encerra uma sessão; sem nome, encerra todas. Elas também são encerradas
+ao sair do Neovim. O diretório de trabalho é o do arquivo Org. Para alterá-lo,
+use, por exemplo, =:dir "subpasta com espaços"= no cabeçalho. Scripts
+temporários são removidos quando a execução termina. Abrir o arquivo
+não executa código; a execução ocorre pelo comando/atalho e tem as mesmas
+permissões do Neovim. Resultados alteram o buffer: use =:w= para salvar.
+
+Erros e tempo limite aparecem nos resultados. Blocos ou resultados
+editados durante a execução não são sobrescritos. O limite padrão é de
+10 segundos por execução (o tempo na fila da sessão não conta).
+Cancelar ou exceder o tempo limite de um bloco ativo em sessão encerra o
+interpretador e perde o estado dessa sessão, incluindo os pedidos na fila.
+
+* Valores, variáveis e composição de blocos
+O padrão é =:results value replace=. Em Python sem sessão, use =return=;
+em sessão, use uma expressão na última linha. Para capturar =print=,
+use =:results output=, como nos blocos criados pelo comando insert-block.
+Lua e JavaScript também aceitam =:results value= sem sessão e usam =return=.
+Shell aceita variáveis escalares. Ruby, Perl e R têm execução output;
+resultados por valor e sessões dessas linguagens ainda não são implementados.
+
+#+begin_example
+#+name: dobrar
+#+begin_src python :results value :var x=1
+return x * 2
+#+end_src
+
+#+begin_src python :results value :var resposta=dobrar(x=21)
+return resposta
+#+end_src
+#+end_example
+
+=:var= aceita números, strings entre aspas, booleanos, listas/dicionários
+JSON, tabelas nomeadas, blocos example e resultados de outros blocos nomeados.
+Parâmetros de chamada usam =nome(valor=1)=. Dependências são avaliadas antes
+do bloco consumidor, sem inserir resultados extras. Ciclos são rejeitados.
+Tabelas de entrada ignoram linhas separadoras; cabeçalhos de colunas são
+removidos automaticamente quando a segunda linha é um separador.
+
+=#+NAME:= nomeia blocos e tabelas. =:OrgWorkbench execute nome= executa
+um bloco nomeado. =:noweb yes= expande =<<nome>>= como código e
+=<<nome(x=21)>>= como resultado de uma chamada. =:noweb-ref= pode agrupar
+fragmentos. As opções =eval= e =tangle= restringem quando expandir.
+
+Cabeçalhos são combinados na ordem: configuração, propriedades do arquivo,
+propriedades dos títulos ancestrais, linhas =#+HEADER:= e cabeçalho do bloco.
+Opções por linguagem têm precedência sobre as genéricas no mesmo nível.
+Por exemplo:
+
+#+begin_example
+#+PROPERTY: header-args:python :session pesquisa :results output
+* Análise
+:PROPERTIES:
+:header-args:python: :var n=21
+:END:
+#+header: :var fator=2
+#+begin_src python
+print(n * fator)
+#+end_src
+#+end_example
+
+=:OrgWorkbench execute-all= ou =\oba= executa os blocos do documento
+em sequência. Pula blocos com =:eval no= ou =:eval never= e para no primeiro
+erro. =:eval never-export= permite execução manual, como no Emacs.
+
+* Formatos dos resultados
+São suportados os modos =output= e =value=; substituição (=replace=),
+acréscimo (=append=), inserção antes (=prepend=), =silent= e =none=;
+e formatos =verbatim=, =scalar=, =table=, =vector=, =list=, =raw=,
+=code=, =drawer=, =html=, =latex= e =org=. Valores que são listas
+viram tabelas por padrão. =:wrap example= envolve o resultado em um bloco.
+
+=:results output file :file saida.txt= grava a saída em arquivo e insere
+um link. =:results file link :file figura.png= insere um link para o arquivo
+gerado pelo código. Para Python com Matplotlib instalado,
+=:results output graphics file :file figura.png= salva a figura atual;
+no modo value, uma Figure retornada também pode ser salva.
+=:output-dir= determina o diretório dos arquivos de resultado.
+
+=:prologue= e =:epilogue= adicionam código antes/depois do corpo.
+Python sem sessão aceita =:return expressão= em modo value.
+
+Estas implementações não cobrem o Babel completo: faltam sessões fora de
+Python, =#+CALL:=, referências entre arquivos, índices de tabelas, avaliação
+de Elisp nos cabeçalhos, cache, stdin, post, rownames, hlines yes, modo
+interativo e outros backends. Recursos não suportados nos cabeçalhos
+de execução geram erro quando reconhecidos, em vez de fingir compatibilidade.
+
+O arquivo =examples/code.org= contém exemplos prontos.
+
+* Comandos e comportamento
+| Comando                              | Comportamento                                 |
+|--------------------------------------+-----------------------------------------------|
+| OrgWorkbench todo                    | Alternar estado TODO                          |
+| OrgWorkbench promote / demote        | Alterar nível da árvore inteira               |
+| OrgWorkbench heading                 | Inserir título após a árvore atual            |
+| OrgWorkbench checkbox                | Alternar checkbox do item atual               |
+| OrgWorkbench schedule 2026-10-20      | Inserir/atualizar SCHEDULED                    |
+| OrgWorkbench deadline 2026-10-22      | Inserir/atualizar DEADLINE                     |
+| OrgWorkbench agenda                  | Datas da semana e atrasos na quickfix         |
+| OrgWorkbench todos                   | Todas as tarefas pendentes na quickfix        |
+| OrgWorkbench capture t / n / j       | Captura de tarefa, nota ou entrada de diário   |
+| OrgWorkbench clock-in / clock-out    | Registrar tempo na sessão atual               |
+| OrgWorkbench refile /caminho/a.org   | Mover árvore para outro buffer/arquivo         |
+| OrgWorkbench archive                 | Mover árvore para arquivo .org_archive        |
+| OrgWorkbench edit-source             | Editar conteúdo do bloco src em outro buffer  |
+| OrgWorkbench table-align             | Alinhar tabela simples por largura visual     |
+| OrgWorkbench link                    | Abrir link sob o cursor                       |
+| OrgWorkbench export                  | Exportar HTML básico para arquivo .org.html    |
+| OrgWorkbench tangle                  | Extrair blocos com :tangle yes ou caminho      |
+| OrgWorkbench insert-block python     | Inserir bloco de código                       |
+| OrgWorkbench execute                 | Executar bloco e inserir resultados           |
+| OrgWorkbench execute nome            | Executar bloco nomeado                        |
+| OrgWorkbench execute-all              | Executar todos os blocos em sequência          |
+| OrgWorkbench session-reset nome      | Encerrar sessão Python                        |
+| OrgWorkbench cancel-execution        | Cancelar execução do bloco atual              |
+
+Os comandos de edição alteram buffers; use =:w= para salvar. Refile e archive
+deixam origem E destino modificados: use =:wall= para salvar os dois.
+O destino de refile deve ser outro arquivo existente ou em uma pasta existente.
+Os caminhos de refile/export podem conter espaços.
+
+A agenda considera os arquivos de =agenda_files=, incluindo alterações ainda
+não salvas em buffers carregados. Exibe a primeira data entre SCHEDULED e
+DEADLINE por título, inclui atrasos e ignora estados concluídos. Enter na
+quickfix visita a origem. Execute novamente para atualizar a lista.
+
+Na captura, edite o texto e use =:w= ou =C-c C-c= em modo normal para gravar
+no arquivo de destino; =:q= fecha. =C-c C-k= cancela. A captura salva também
+as alterações já presentes no buffer de destino, se ele estiver aberto.
+O diário é uma lista de entradas datadas, sem datetree.
+
+No editor de blocos, =:w= aplica as mudanças ao buffer Org e =:q= fecha;
+salve o arquivo Org depois. Alterações concorrentes no bloco são detectadas
+e não são sobrescritas. Editar ou salvar esse buffer não executa código;
+use o comando execute no bloco original.
+
+Tangle usa também a herança de header-args e expande referências de código
+noweb. Blocos do mesmo arquivo/linguagem são concatenados. Destinos com
+alterações não salvas são rejeitados. Chamadas noweb que exigem avaliação
+de código não são executadas pelo tangle.
+
+* Atalhos em buffers Org
+Todos os atalhos abaixo são de modo normal. São sequências interpretadas
+pelo Neovim; não emulam o sistema de entrada do Emacs.
+
+| Atalho       | Ação                              |
+|--------------+-----------------------------------|
+| C-c C-t      | Alternar TODO                     |
+| C-c C-s      | Agendar                           |
+| C-c C-d      | Definir prazo                     |
+| C-c C-e      | Exportar HTML                     |
+| C-c C-o      | Abrir link                        |
+| C-c '        | Editar bloco src                  |
+| C-c C-c      | Executar bloco src                |
+| C-Space      | Alternar checkbox                 |
+| M-Enter      | Novo título                       |
+| M-Left/Right | Promover/rebaixar árvore           |
+| Tab          | Alternar dobra                    |
+| Shift-Tab    | Fechar/abrir todas as dobras        |
+| \ot          | Alternar TODO                     |
+| \os / \od    | Agendar / prazo                   |
+| \ox          | Checkbox                          |
+| \oxi / \oxo  | Iniciar / encerrar relógio         |
+| \o$          | Arquivar                          |
+| \o'          | Editar bloco                      |
+| \o=          | Alinhar tabela                    |
+| \obt         | Tangle                            |
+| \obi         | Criar bloco                       |
+| \obx / \obk  | Executar / cancelar bloco          |
+| \oba         | Executar todos os blocos           |
+| \obr         | Encerrar todas as sessões Python   |
+
+Os atalhos com barra usam o maplocalleader da configuração atual.
+Dependendo do terminal, algumas combinações de Alt/Ctrl podem não chegar
+ao Neovim; os comandos e atalhos com maplocalleader são alternativas.
+
+* Configuração
+O spec do lazy.nvim chama =setup()=; altere essa chamada para personalizar:
+
+#+begin_src lua
+require("org_workbench").setup({
+  directory = "~/org",
+  agenda_days = 7,
+  -- agenda_files = { "~/org/**/*.org", "~/trabalho/**/*.org" },
+  todo_keywords = "TODO NEXT WAITING | DONE CANCELLED",
+  emacs_keys = true,
+  babel = {
+    default_header_args = ":results value replace",
+    timeout_ms = 10000,
+    max_output_bytes = 1000000,
+    runners = {
+      -- Lista de argumentos; {file} recebe o script temporário.
+      python = { "python3", "{file}" },
+      -- Exemplo: usar um ambiente virtual.
+      -- python = { "/caminho/venv/bin/python", "{file}" },
+    },
+  },
+})
+#+end_src
+
+=#+TODO: TODO WAIT | DONE= no arquivo substitui os estados configurados.
+Anotações de teclas entre parênteses são lidas, mas não criam atalhos rápidos.
+Após o último estado, o próximo comando TODO remove a palavra de estado.
+
+=capture_templates= aceita entradas com =description=, =template= e =target=.
+Os placeholders disponíveis são =%?= (cursor), =%t=, =%T=, =%u=, =%U=
+e =%<formato de os.date>=. Não há avaliação de expressões Lua/Elisp.
+
+Para usar em outra configuração com lazy.nvim:
+
+#+begin_src lua
+{
+  dir = "/caminho/org-workbench",
+  name = "org-workbench",
+  ft = "org",
+  cmd = "OrgWorkbench",
+  config = function() require("org_workbench").setup() end,
+}
+#+end_src
+
+Sem gerenciador de plugins, adicione esta pasta ao runtimepath e chame setup().
+Não carregue outro plugin Org simultaneamente nos mesmos buffers.
+
+* Limitações e caminho para paridade
+| Área                      | Situação                                           |
+|---------------------------+----------------------------------------------------|
+| Parser                    | Títulos, TODO, tags, prioridade, planejamento, blocos |
+| Títulos e dobras          | Implementados; ciclo global apenas aberto/fechado   |
+| TODO                      | Ciclo simples; sem logs automáticos ou dependências |
+| Agenda                    | Lista simples; sem recorrência, hábitos ou grid     |
+| Captura                   | Templates simples; sem datetree, prompts ou refile  |
+| Propriedades e tags       | Tags lidas; sem editor de propriedades/herança      |
+| Clock                     | Sessão atual; sem recuperação após reinício/relatórios |
+| Tabelas                   | Alinhamento; sem fórmulas ou referências            |
+| Links                     | http(s), mailto, file, títulos locais               |
+| Blocos                    | Edição, tangle e execução assíncrona com stdout/stderr |
+| Babel                     | Sessões Python, variáveis, value, noweb, herança, arquivos |
+| Paridade de Babel         | Parcial; limitações detalhadas acima               |
+| Exportação                | HTML básico; sem LaTeX, PDF, ODT ou ox completo      |
+| Org completo e Elisp      | Não implementados                                  |
+
+A paridade requer especificar e comparar o comportamento com o Emacs para
+cada área. A ordem sugerida é: parser/propriedades/recorrências; agenda e
+captura completas; tabelas e fórmulas; demais recursos de Babel; exportadores; testes
+de compatibilidade. Isso é trabalho futuro, não uma promessa de cobertura
+pelos comandos já existentes.
+
+* Arquitetura e testes
+- =lua/org_workbench/parser.lua=: análise do documento e datas.
+- =lua/org_workbench/editor.lua=: alterações estruturais, relógio e blocos.
+- =lua/org_workbench/babel.lua=: processos, cancelamento e resultados de código.
+- =lua/org_workbench/context.lua= e =headers.lua=: herança, variáveis e noweb.
+- =lua/org_workbench/results.lua=: formatos e substituição de resultados.
+- =lua/org_workbench/python.lua= e =runtime/python_worker.py=: sessões Python.
+- =lua/org_workbench/languages.lua=: wrappers para outras linguagens.
+- =lua/org_workbench/views.lua=: agenda, captura, arquivos e exportação.
+- =lua/org_workbench/init.lua=: configuração, comandos, dobras e atalhos.
+
+#+begin_src sh
+nvim --headless -u NONE -i NONE -l local-plugins/org-workbench/tests/run.lua
+nvim --headless -u NONE -i NONE -l local-plugins/org-workbench/tests/babel.lua
+#+end_src
+
+Os testes usam arquivos temporários e não carregam nvim-orgmode nem sua
+configuração pessoal. Cobrem análise, preservação de blocos, TODO, datas,
+checkboxes, tabelas, clock, captura, agenda, refile, arquivo, links e tangle.
+Os testes de Babel executam Python, Lua, Node, sh e bash e verificam resultados,
+erros, limite de tempo, cancelamento e preservação de edições concorrentes.
+A suíte também executa os mesmos documentos em Emacs limpo (=--batch -Q=)
+e compara os resultados. Apenas os testes de comparação requerem Emacs;
+o plugin funciona sem ele. Consulte =COMPATIBILITY.org= para os limites
+da evidência de compatibilidade.
+=:checkhealth org_workbench= verifica a instalação independente.

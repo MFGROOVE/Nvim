@@ -1,0 +1,11 @@
+;;; Evaluate only a generated fixture, with a clean Emacs configuration.
+(require 'org)
+(require 'ob-python)
+(require 'ob-shell)
+(require 'ob-js)
+(require 'ob-lua)
+(setq org-confirm-babel-evaluate nil org-babel-python-command "python3" org-babel-js-cmd "node")
+(let ((source (pop command-line-args-left)) (target (pop command-line-args-left)))
+  (find-file source)
+  (org-babel-execute-buffer)
+  (write-region (point-min) (point-max) target nil 'silent))

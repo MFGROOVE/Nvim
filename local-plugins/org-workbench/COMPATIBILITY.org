@@ -1,0 +1,75 @@
+#+title: Compatibilidade com Org mode
+#+date: 2026-10-21
+
+* Escopo da implementação
+Org Workbench é um plugin independente. Não usa Emacs como backend em
+tempo de execução. O trabalho atual prioriza código executável em arquivos
+Org; equivalência completa com o Org mode não foi atingida.
+
+* Como o comportamento é comparado
+=tests/emacs-reference.el= inicia Emacs com =--batch -Q=, habilita apenas
+os backends dos testes e executa documentos temporários. A suíte em
+=tests/advanced.lua= executa os mesmos documentos com o plugin e compara
+os corpos dos resultados. Linhas em branco de separação são ignoradas;
+um resultado output vazio pode ser representado com ou sem uma linha =: =.
+
+Referência usada nesta implementação: GNU Emacs 31.1, Org 9.8.7.
+Essa comparação cobre exemplos definidos, não prova paridade de toda
+uma linguagem ou de todos os cabeçalhos do Babel.
+
+* Casos cobertos pela comparação
+- Python: output e valores escalares, valores ausentes, booleanos,
+  tabelas, listas e stdout com opção table (mantido como texto pelo backend Python).
+- Lua e JavaScript: resultados numéricos por valor com parâmetros.
+- Shell: captura de stdout.
+- Sessão Python: estado compartilhado e valor da última expressão.
+- Variáveis escalares e tabelas nomeadas, incluindo colnames.
+- Propriedades de arquivo e linhas HEADER, com precedência local.
+- Nomeação de resultados e chamadas entre blocos com parâmetros.
+- Noweb: expansão literal e chamadas com parâmetros.
+- Resultados drawer, wrap example e wrap no.
+- Prologue e epilogue.
+
+Outros testes exercitam cancelamento, tempo limite, fila de sessões,
+referências circulares, preservação de edições concorrentes, arquivos,
+substituição/acréscimo de resultados e execução do documento de exemplos.
+O tangle é testado com propriedades herdadas e expansão noweb literal.
+O carregamento pelo lazy.nvim e os atalhos têm um teste de integração.
+
+* Diferenças ainda conhecidas
+- Sessões persistentes implementadas apenas para Python. São encerradas
+  ao sair do Neovim; cancelamento/timeout da execução ativa reinicia a sessão.
+- C, C++, Java, Kotlin, R em modo value, Elisp e outros backends não têm
+  equivalência com os backends de Babel correspondentes.
+- Não há CALL, Library of Babel, referência entre arquivos ou índices de
+  tabelas. Literais de listas/dicionários em :var usam JSON, não Elisp.
+- Não há avaliação de Elisp em cabeçalhos, cache, stdin, post, rownames
+  ou hlines yes. Não há terminal/entrada interativa.
+- noweb com chamada de função é avaliado na execução de blocos; o tangle
+  só expande código literal, sem executar chamadas noweb.
+- A representação de tipos complexos (objetos, dicionários, dados de
+  bibliotecas) é parcial. Ruby, Perl e R são executados em modo output.
+- Gráficos automáticos requerem Matplotlib no interpretador configurado.
+  O caminho está implementado, mas não faz parte da comparação com Emacs
+  neste ambiente, onde Matplotlib não está instalado.
+- Resultados raw são delimitados como parágrafos; mantenha uma linha
+  vazia antes de texto que não pertença ao resultado.
+- A edição usa atalhos do Neovim em modo normal, não o sistema de entrada
+  completo do Emacs. Agenda, tabelas, captura e exportadores continuam
+  com cobertura menor que a do Org mode.
+
+* Executar a validação
+#+begin_src sh
+nvim --headless -u NONE -i NONE -l local-plugins/org-workbench/tests/run.lua
+nvim --headless -u NONE -i NONE -l local-plugins/org-workbench/tests/babel.lua
+XDG_STATE_HOME=/tmp/org-workbench-test-state XDG_CACHE_HOME=/tmp/org-workbench-test-cache nvim --headless -u NONE -i NONE -l local-plugins/org-workbench/tests/lazy.lua
+#+end_src
+
+Os testes de Babel requerem Python, Lua, Node, sh, bash e Emacs instalados.
+Eles só executam código das fixtures e dos exemplos do plugin.
+
+* Referências de comportamento
+- [[https://orgmode.org/manual/Using-Header-Arguments.html][Herança e precedência de cabeçalhos]].
+- [[https://orgmode.org/manual/Results-of-Evaluation.html][Coleta e formatação dos resultados]].
+- [[https://orgmode.org/manual/Environment-of-a-Code-Block.html][Variáveis e referências entre blocos]].
+- [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-python.html][Sessões e valores em Python]].

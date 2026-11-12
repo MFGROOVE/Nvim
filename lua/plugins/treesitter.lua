@@ -50,8 +50,21 @@ return {
 			map({ "n", "x", "o" }, "[a", function() move.goto_previous_start("@parameter.inner", "textobjects") end, { desc = "Previous parameter" })
 			map({ "n", "x", "o" }, "]f", function() move.goto_next_start("@function.outer", "textobjects") end, { desc = "Next function" })
 			map({ "n", "x", "o" }, "[f", function() move.goto_previous_start("@function.outer", "textobjects") end, { desc = "Previous function" })
-			map({ "n", "x", "o" }, "]c", function() move.goto_next_start("@class.outer", "textobjects") end, { desc = "Next class" })
-			map({ "n", "x", "o" }, "[c", function() move.goto_previous_start("@class.outer", "textobjects") end, { desc = "Previous class" })
+			-- No modo diff, ]c/[c mantêm o comportamento nativo (pular entre mudanças)
+			map({ "n", "x", "o" }, "]c", function()
+				if vim.wo.diff then
+					vim.cmd.normal({ vim.v.count1 .. "]c", bang = true })
+				else
+					move.goto_next_start("@class.outer", "textobjects")
+				end
+			end, { desc = "Next class / next change (diff)" })
+			map({ "n", "x", "o" }, "[c", function()
+				if vim.wo.diff then
+					vim.cmd.normal({ vim.v.count1 .. "[c", bang = true })
+				else
+					move.goto_previous_start("@class.outer", "textobjects")
+				end
+			end, { desc = "Previous class / previous change (diff)" })
 
 			map({ "x", "o" }, "af", function() select.select_textobject("@function.outer", "textobjects") end, { desc = "Around function" })
 			map({ "x", "o" }, "if", function() select.select_textobject("@function.inner", "textobjects") end, { desc = "Inner function" })

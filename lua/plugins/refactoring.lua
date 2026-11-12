@@ -2,100 +2,87 @@ return {
 	{
 		"ThePrimeagen/refactoring.nvim",
 		dependencies = {
-			"nvim-lua/plenary.nvim",
-			"nvim-treesitter/nvim-treesitter",
+			-- exigido no Neovim 0.12 (no 0.13 vira vim.async e deixa de ser necessário)
+			"lewis6991/async.nvim",
 		},
 		lazy = true,
+		-- Cada função retorna um operador (g@): em visual age na seleção; em normal espera
+		-- um movimento/textobject (ex.: <leader>reap, <leader>rviw). Dobrar a tecla final
+		-- (<leader>ree, <leader>rvv) usa a linha atual.
 		keys = {
 			{
 				"<leader>re",
 				function()
-					return require("refactoring").refactor("Extract Function")
+					return require("refactoring").extract_func()
 				end,
-				mode = "x",
+				mode = { "n", "x" },
 				expr = true,
 				desc = "Extract Function",
 			},
 			{
+				"<leader>ree",
+				function()
+					return require("refactoring").extract_func() .. "_"
+				end,
+				mode = "n",
+				expr = true,
+				desc = "Extract Function (line)",
+			},
+			{
 				"<leader>rf",
 				function()
-					return require("refactoring").refactor("Extract Function To File")
+					return require("refactoring").extract_func_to_file()
 				end,
-				mode = "x",
+				mode = { "n", "x" },
 				expr = true,
 				desc = "Extract Function To File",
 			},
 			{
 				"<leader>rv",
 				function()
-					return require("refactoring").refactor("Extract Variable")
+					return require("refactoring").extract_var()
 				end,
-				mode = "x",
+				mode = { "n", "x" },
 				expr = true,
 				desc = "Extract Variable",
 			},
 			{
-				"<leader>rI",
+				"<leader>rvv",
 				function()
-					return require("refactoring").refactor("Inline Function")
+					return require("refactoring").extract_var() .. "_"
 				end,
 				mode = "n",
+				expr = true,
+				desc = "Extract Variable (line)",
+			},
+			{
+				"<leader>rI",
+				function()
+					return require("refactoring").inline_func()
+				end,
+				mode = { "n", "x" },
 				expr = true,
 				desc = "Inline Function",
 			},
 			{
 				"<leader>ri",
 				function()
-					return require("refactoring").refactor("Inline Variable")
+					return require("refactoring").inline_var()
 				end,
 				mode = { "n", "x" },
 				expr = true,
 				desc = "Inline Variable",
 			},
 			{
-				"<leader>rbb",
+				"<leader>rs",
 				function()
-					return require("refactoring").refactor("Extract Block")
+					require("refactoring").select_refactor()
 				end,
-				mode = "n",
-				expr = true,
-				desc = "Extract Block",
-			},
-			{
-				"<leader>rbf",
-				function()
-					return require("refactoring").refactor("Extract Block To File")
-				end,
-				mode = "n",
-				expr = true,
-				desc = "Extract Block To File",
+				mode = { "n", "x" },
+				desc = "Select Refactor",
 			},
 		},
 		opts = {
-			prompt_func_return_type = {
-				go = true,
-				java = true,
-				cpp = true,
-				c = true,
-				h = true,
-				hpp = true,
-				cxx = true,
-				rust = true,
-				zig = true,
-			},
-			prompt_func_param_type = {
-				go = true,
-				java = true,
-				cpp = true,
-				c = true,
-				h = true,
-				hpp = true,
-				cxx = true,
-				rust = true,
-				zig = true,
-			},
-			printf_statements = {},
-			print_var_statements = {},
 			show_success_message = false,
 		},
 	},

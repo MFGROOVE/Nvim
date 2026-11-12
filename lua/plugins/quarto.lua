@@ -1,7 +1,7 @@
 return {
 	{
 		"quarto-dev/quarto-nvim",
-		ft = { "quarto", "qmd" },
+		ft = { "quarto" },
 		dependencies = {
 			"jmbuhr/otter.nvim",
 			"nvim-treesitter/nvim-treesitter",
@@ -12,7 +12,7 @@ return {
 			lspFeatures = {
 				enabled = true,
 				chunks = "curly",
-				languages = { "r", "python","bash"},
+				languages = { "r", "python", "bash" },
 				diagnostics = {
 					enabled = true,
 					triggers = { "BufWritePost" },

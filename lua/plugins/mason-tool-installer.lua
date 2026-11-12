@@ -9,6 +9,7 @@ return {
 				"stylua",
 				"prettier",
 				"black",
+				"isort",
 				"clang-format",
 				"shfmt",
 			},

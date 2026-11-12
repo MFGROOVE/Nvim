@@ -45,8 +45,9 @@ end
 
 vim.api.nvim_create_autocmd("FileType", {
 	callback = function()
-		local ok = pcall(vim.treesitter.get_parser, 0)
-		if ok then
+		-- desde o 0.11 get_parser retorna nil (sem erro) quando não há parser
+		local ok, parser = pcall(vim.treesitter.get_parser, 0)
+		if ok and parser then
 			vim.wo.foldmethod = "expr"
 			vim.wo.foldexpr = "v:lua.safe_foldexpr()"
 		end
@@ -77,7 +78,7 @@ vim.diagnostic.config({
 	severity_sort = true,
 	float = {
 		border = "rounded",
-		source = "always",
+		source = true,
 		focusable = false,
 	},
 })

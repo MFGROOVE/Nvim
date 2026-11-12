@@ -16,7 +16,13 @@ return {
 				"<cmd>ToggleTerm<CR>",
 				{ noremap = true, silent = true, desc = "Toggle Terminal" }
 			)
-			vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { noremap = true, silent = true })
+			-- <Esc> só nos terminais do toggleterm, para não quebrar fzf/lazygit em outros terminais
+			vim.api.nvim_create_autocmd("TermOpen", {
+				pattern = "term://*toggleterm#*",
+				callback = function(args)
+					vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { buffer = args.buf, silent = true })
+				end,
+			})
 		end,
 	},
 }

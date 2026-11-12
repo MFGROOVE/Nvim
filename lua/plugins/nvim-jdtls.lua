@@ -49,19 +49,16 @@ return {
 			vim.keymap.set("n", "<leader>ln", vim.lsp.buf.rename, opts("LSP: Rename"))
 			vim.keymap.set({ "n", "v" }, "<leader>la", "<cmd>Lspsaga code_action<CR>", opts("LSP: Code Action"))
 			vim.keymap.set("n", "<leader>li", "<cmd>Lspsaga hover_doc<CR>", opts("LSP: Hover Doc"))
-			vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts("Diagnostic: Prev"))
-			vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts("Diagnostic: Next"))
+			vim.keymap.set("n", "[d", function()
+				vim.diagnostic.jump({ count = -1, float = true })
+			end, opts("Diagnostic: Prev"))
+			vim.keymap.set("n", "]d", function()
+				vim.diagnostic.jump({ count = 1, float = true })
+			end, opts("Diagnostic: Next"))
 
-			if client.server_capabilities.inlayHintProvider then
-				vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-			end
-
+			-- inlay hints: tratados pelo LspAttach em nvim-lspconfig.lua
 			if client.server_capabilities.codeLensProvider then
-				vim.lsp.codelens.refresh()
-				vim.api.nvim_create_autocmd({ "BufEnter", "CursorHold", "InsertLeave" }, {
-					buffer = bufnr,
-					callback = vim.lsp.codelens.refresh,
-				})
+				vim.lsp.codelens.enable(true, { bufnr = bufnr })
 			end
 
 			require("jdtls").setup_dap({ hotcodereplace = "auto" })
@@ -125,6 +122,42 @@ return {
 			end, opts("Debug: Hover Info"))
 			vim.keymap.set("n", "<Leader>dw", debug_waydroid, opts("Debug: Waydroid Attach"))
 
+			-- Geração de código: filtra o code action pelo kind e aplica direto se só houver um.
+			-- O nvim-jdtls não implementa o prompt de accessors, então "getters e setters"
+			-- gera para todos os campos que ainda não têm. Para um campo só, use <leader>la
+			-- com o cursor nele ("Generate Getter and Setter for 'x'").
+			-- title desambigua: "Generate Getters", "Generate Setters" e "Generate Getters and
+			-- Setters" têm o mesmo kind.
+			local function generate(kind, title)
+				return function()
+					vim.lsp.buf.code_action({
+						context = { only = { kind }, diagnostics = {} },
+						filter = title and function(action)
+							return action.title == title
+						end,
+						apply = true,
+					})
+				end
+			end
+			local accessors = "source.generate.accessors"
+			vim.keymap.set(
+				{ "n", "v" },
+				"<leader>jg",
+				generate(accessors, "Generate Getters and Setters"),
+				opts("Java: Getters/Setters")
+			)
+			vim.keymap.set({ "n", "v" }, "<leader>jG", generate(accessors, "Generate Getters"), opts("Java: Getters"))
+			vim.keymap.set({ "n", "v" }, "<leader>jS", generate(accessors, "Generate Setters"), opts("Java: Setters"))
+			vim.keymap.set({ "n", "v" }, "<leader>jc", generate("source.generate.constructors"), opts("Java: Constructor"))
+			vim.keymap.set({ "n", "v" }, "<leader>js", generate("source.generate.toString"), opts("Java: toString()"))
+			vim.keymap.set(
+				{ "n", "v" },
+				"<leader>je",
+				generate("source.generate.hashCodeEquals"),
+				opts("Java: equals()/hashCode()")
+			)
+			vim.keymap.set("n", "<leader>jo", require("jdtls").organize_imports, opts("Java: Organize Imports"))
+
 			vim.keymap.set("n", "<leader>tm", require("jdtls").test_nearest_method, opts("Java: Test Nearest Method"))
 			vim.keymap.set("n", "<leader>tc", require("jdtls").test_class, opts("Java: Test Class"))
 			vim.keymap.set("n", "<leader>tr", function()
@@ -133,22 +166,39 @@ return {
 		end
 
 		local jdtls_bin = mason_path .. "/jdtls/bin/jdtls"
-		local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
-		local workspace_dir = vim.fn.stdpath("data") .. "/jdtls-workspace/" .. project_name
 
-		local root_dir = require("jdtls.setup").find_root({ "build.gradle", "pom.xml", "gradlew", "mvnw", ".git" })
+		local function start_jdtls(bufnr)
+			-- Workspace derivado do root do projeto, não do cwd: o cwd depende de onde
+			-- o nvim foi aberto e do lcd/project.nvim, e projetos diferentes colidiam.
+			-- Prioridade para a raiz do build (settings.gradle/gradlew/mvnw): num multi-módulo,
+			-- o build.gradle mais próximo é só um submódulo e não importa sozinho.
+			local root_dir = vim.fs.root(bufnr, {
+				{ "settings.gradle", "settings.gradle.kts", "gradlew", "mvnw" },
+				{ "build.gradle", "build.gradle.kts", "pom.xml" },
+				".git",
+			}) or vim.fs.dirname(vim.api.nvim_buf_get_name(bufnr))
+			-- hash do caminho evita que dois projetos com a mesma pasta final dividam o workspace
+			local project_name = vim.fn.fnamemodify(root_dir, ":t") .. "-" .. vim.fn.sha256(root_dir):sub(1, 8)
 
-		local config = {
-			capabilities = capabilities,
-			cmd = { jdtls_bin, "-data", workspace_dir },
-			root_dir = root_dir,
-			on_attach = on_attach,
-			init_options = {
-				bundles = bundles,
-				extendedClientCapabilities = require("jdtls").extendedClientCapabilities,
-			},
-			settings = {
+			local workspace_dir = vim.fn.stdpath("data") .. "/jdtls-workspace/" .. project_name
+
+			local settings = {
 				java = {
+					-- Android: o Buildship não entende o AGP e importa os módulos sem source folders
+					-- (todo arquivo fica "not on the classpath"). O jdtls traz um init.gradle que
+					-- resolve isso (java.jdt.ls.androidSupport), mas ele quebra com AGP 8 + Gradle 8.x
+					-- (setCanBeResolved em configuration travada). Usamos uma cópia corrigida em
+					-- jdtls/android-init.gradle e deixamos o suporte embutido desligado para o script
+					-- original não rodar junto. Em projetos sem plugin Android o script não faz nada.
+					jdt = { ls = { androidSupport = { enabled = false } } },
+					import = {
+						gradle = {
+							arguments = {
+								"--init-script",
+								vim.fn.stdpath("config") .. "/jdtls/android-init.gradle",
+							},
+						},
+					},
 					testCodeLens = { enabled = true },
 					referencesCodeLens = { enabled = true },
 					implementationsCodeLens = { enabled = true },
@@ -159,9 +209,34 @@ return {
 						},
 					},
 				},
-			},
-		}
+			}
 
-		require("jdtls").start_or_attach(config)
+			local config = {
+				capabilities = capabilities,
+				cmd = { jdtls_bin, "-data", workspace_dir },
+				root_dir = root_dir,
+				on_attach = on_attach,
+				init_options = {
+					bundles = bundles,
+					extendedClientCapabilities = require("jdtls").extendedClientCapabilities,
+					-- o import inicial só enxerga as settings mandadas no initialize;
+					-- config.settings (didChangeConfiguration) chega tarde demais
+					settings = settings,
+				},
+				settings = settings,
+			}
+
+			require("jdtls").start_or_attach(config, {}, { bufnr = bufnr })
+		end
+
+		-- O config do lazy roda só no primeiro buffer Java; o autocmd cobre os demais.
+		vim.api.nvim_create_autocmd("FileType", {
+			group = vim.api.nvim_create_augroup("user_jdtls", { clear = true }),
+			pattern = "java",
+			callback = function(args)
+				start_jdtls(args.buf)
+			end,
+		})
+		start_jdtls(vim.api.nvim_get_current_buf())
 	end,
 }

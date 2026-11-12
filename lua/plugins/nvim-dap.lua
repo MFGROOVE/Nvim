@@ -41,16 +41,6 @@ return {
 			end,
 		})
 
-		require("mason-nvim-dap").setup({
-			automatic_installation = true,
-			ensure_installed = { "codelldb", "python" },
-			handlers = {
-				function(config)
-					require("mason-nvim-dap").default_setup(config)
-				end,
-			},
-		})
-
 		local function set_arrow_keys()
 			vim.keymap.set("n", "<Down>", dap.step_over, { desc = "Debug: Step Over" })
 			vim.keymap.set("n", "<Right>", dap.step_into, { desc = "Debug: Step Into" })

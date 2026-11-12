@@ -21,6 +21,7 @@ return {
 			{ "<leader>r", group = "Refactor" },
 			{ "<leader>q", group = "Trouble/Quickfix" },
 			{ "<leader>m", group = "Multicursor" },
+			{ "<leader>j", group = "Java" },
 			{ "]", group = "Next" },
 			{ "[", group = "Previous" },
 			{ "<leader>a", desc = "Swap parameter next" },

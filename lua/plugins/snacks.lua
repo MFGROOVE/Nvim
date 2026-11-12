@@ -9,7 +9,7 @@ return {
 		notifier = { enabled = true },
 		terminal = { enabled = true },
 
-		indent = { enabled = true },
+		indent = { enabled = false }, -- guias ficam com o indent-blankline
 		scope = { enabled = true },
 	},
 	keys = {
